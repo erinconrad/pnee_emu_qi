@@ -1001,24 +1001,22 @@ for ia = 1:2
     months3 = log(orig_months3);
     months12 = log(orig_months12);
 
-    jitter = randn(npts,3)*0.03;
-
     % Loop over patients
     for ip = 1:npts
         % plot all individual points
-        plot(1+jitter(ip,1),pre(ip),'ko','linewidth',2,'markersize',10)
+        plot(1,pre(ip),'ko','linewidth',2,'markersize',10)
         hold on
-        plot(2+jitter(ip,2),months3(ip),'ko','linewidth',2,'markersize',10)
-        plot(3+jitter(ip,3),months12(ip),'ko','linewidth',2,'markersize',10)
+        plot(2,months3(ip),'ko','linewidth',2,'markersize',10)
+        plot(3,months12(ip),'ko','linewidth',2,'markersize',10)
 
         % plot lines connecting the points
         % preferentially 1-2-3, but do 1-3 if there is no 2
         if ~isnan(months3(ip)) && ~isnan(months12(ip)) && ~isnan(pre(ip))
-            plot([1+jitter(ip,1) 2+jitter(ip,2) 3+jitter(ip,3)],[pre(ip) months3(ip) months12(ip)],'k-','linewidth',2)
+            plot([1 2 3],[pre(ip) months3(ip) months12(ip)],'k-','linewidth',2)
         elseif ~isnan(months3(ip)) && isnan(months12(ip)) && ~isnan(pre(ip))
-            plot([1+jitter(ip,1) 2+jitter(ip,2)],[pre(ip) months3(ip)],'k-','linewidth',2)
+            plot([1 2],[pre(ip) months3(ip)],'k-','linewidth',2)
         elseif isnan(months3(ip)) && ~isnan(months12(ip)) && ~isnan(pre(ip))
-            plot([1+jitter(ip,1) 3+jitter(ip,3)],[pre(ip) months12(ip)],'k-','linewidth',2)
+            plot([1 3],[pre(ip) months12(ip)],'k-','linewidth',2)
         elseif isnan(months3(ip)) && isnan(months12(ip)) && ~isnan(pre(ip))
         else
             error('why')
@@ -1027,27 +1025,11 @@ for ia = 1:2
     end
 
     xticks([1 2 3])
-    %{
-    labels = cell(1,3);
-    labels{1} = sprintf('Pre-EMU\n(N = %d)',sum(~isnan(pre)));
-    labels{2} = sprintf('3 months post\n(N = %d)',sum(~isnan(months3)));
-    labels{3} = sprintf('12-20 months post\n(N = %d)',sum(~isnan(months12)));
-    %}
-    %xticklabels({'Pre-EMU','3 months post','12-20 months post'})
-    row1 = {'Pre-EMU','3 months post','12-20 months post'};
-    row2 = {sprintf('(N = %d)',sum(~isnan(pre))),...
-        sprintf('(N = %d)',sum(~isnan(months3))),...
-        sprintf('(N = %d)',sum(~isnan(months12)))};
-    labelArray = [row1; row2];
-    %labelArray = strjust(pad(labelArray),'center');
-    tickLabels = strtrim(sprintf('%s\\newline%s\n', labelArray{:}));
-    xticklabels(tickLabels)
+    xticklabels({'Pre-EMU','3 months post','12-20 months post'})
     ylabel('log(Events/month)')
     title(arm_text)
     set(gca,'fontsize',20)
     xlim([0.9 3.1])
-    ax.TickLabelInterpreter = 'tex';
-
 
     yl = ylim;
     ybar1 = yl(1) + (yl(2)-yl(1))* 1.03;
@@ -1078,7 +1060,7 @@ print(gcf,[results_folder,'paired_plots3'],'-dpng')
 
 
 %% Make a paired plot
-if 0
+if 1
 figure
 set(gcf,'position',[10 10 1400 1000])
 tiledlayout(2,2,'tilespacing','compact','padding','loose')
