@@ -18,18 +18,14 @@ an example of how this should look:
     locations.results = [locations.main_folder,'results/'];
 
     end
-4) Download the erin_analysis_full csv file from redcap and put it in your
-data folder (***eventually put this on PennBox so that anyone can run this)
+4) Download the pnee_data.csv and pnee_labels.csv files from the following
+link and add them to your data folder: 
+
+https://upenn.box.com/s/h28wvjlj4381z3ddgwhkp0avk8iepcsn
+
 5) Navigate to the script folder and type
     >> main
 
-This will run the analyses and output to the results folder:
-- pre_vs_post_table.csv, a table with the pre- vs post-intervention arm
-comparisons
-- paired_table.csv, a table with the paired pre-EMU vs post-EMU sz
-frequency comparisons
-- paired_plots.png, a figure with the paired pre-EMU vs post-EMU sz
-frequency comparisons
-
+This will run the analyses and output tables and the figure to the results folder.
 
 %}

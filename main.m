@@ -1,8 +1,6 @@
 clear
 clc
 
-%% To dos
-
 
 %% Dependencies
 % This requires adding myFisher23 to your path 
@@ -12,8 +10,8 @@ clc
 locations = pnee_locations;
 data_folder = locations.data;
 results_folder = locations.results;
-file_name = 'PNEEEMUPathway-Erincleaner_DATA_2024-05-14_1128.csv';
-label_file_name = 'PNEEEMUPathway-Erincleaner_DATA_LABELS_2024-05-14_1129.csv';
+file_name = 'pnee_data.csv';
+label_file_name = 'pnee_labels.csv';
 
 % load redcap output file into table
 T = readtable([data_folder,file_name],'ReadVariableNames',true);
@@ -975,11 +973,13 @@ writetable(outT2,[results_folder,'paired_table.csv'],'QuoteStrings',true);
 figure
 set(gcf,'position',[1 10 1440 500])
 tiledlayout(1,2,'tilespacing','compact','padding','compact')
+max_point = 40;
 
 points = {'event_frequency_pre','event_frequency_post','post_emu_freq_12mo_comb'};
 
 % Loop over arms
 for ia = 1:2
+    
     if ia == 1
         arm_text = 'Care-as-usual';
     else
@@ -997,14 +997,31 @@ for ia = 1:2
     p1 = signrank(orig_pre,orig_months3);
     p2 = signrank(orig_pre,orig_months12);
 
-    pre = log(orig_pre);
-    months3 = log(orig_months3);
-    months12 = log(orig_months12);
+    %[pre,Ipre] = min([orig_pre,max_point]);
+    %[months3,Imonths3] = min([orig_months3,max_point]);
+    %[months12,Imonths12] = min([orig_months12,max_point]);
+
+    pre = orig_pre;
+    months3 = orig_months3;
+    months12 = orig_months12;
 
     jitter = randn(npts,3)*0.03;
+    
+    fprintf('The following outlying points are omitted from the %s plot:\n',arm_text)
 
     % Loop over patients
     for ip = 1:npts
+        all_points = [pre(ip) months3(ip) months12(ip)];
+        if pre(ip) > max_point
+            fprintf('Pre-EMU %d events/month\n',pre(ip));
+        end
+        if months3(ip) > max_point
+            fprintf('3-months post %d events/month\n',months3(ip));
+        end
+        if months12(ip) > max_point
+            fprintf('12-months post %d events/month\n',months12(ip));
+        end
+
         % plot all individual points
         plot(1+jitter(ip,1),pre(ip),'ko','linewidth',2,'markersize',10)
         hold on
@@ -1013,6 +1030,7 @@ for ia = 1:2
 
         % plot lines connecting the points
         % preferentially 1-2-3, but do 1-3 if there is no 2
+        %{
         if ~isnan(months3(ip)) && ~isnan(months12(ip)) && ~isnan(pre(ip))
             plot([1+jitter(ip,1) 2+jitter(ip,2) 3+jitter(ip,3)],[pre(ip) months3(ip) months12(ip)],'k-','linewidth',2)
         elseif ~isnan(months3(ip)) && isnan(months12(ip)) && ~isnan(pre(ip))
@@ -1022,6 +1040,16 @@ for ia = 1:2
         elseif isnan(months3(ip)) && isnan(months12(ip)) && ~isnan(pre(ip))
         else
             error('why')
+        end
+        %}
+        for k = 1:2
+            if all_points(k) > max_point
+                plot([k + jitter(ip,k) k+1+jitter(ip,k+1)],[max_point all_points(k+1)],'r--','linewidth',2)
+            elseif all_points(k+1) > max_point
+                plot([k + jitter(ip,k) k+1+jitter(ip,k+1)],[all_points(k) max_point],'r--','linewidth',2)
+            else
+                plot([k + jitter(ip,k) k+1+jitter(ip,k+1)],[all_points(k) all_points(k+1)],'k-','linewidth',2)
+            end
         end
 
     end
@@ -1042,22 +1070,23 @@ for ia = 1:2
     %labelArray = strjust(pad(labelArray),'center');
     tickLabels = strtrim(sprintf('%s\\newline%s\n', labelArray{:}));
     xticklabels(tickLabels)
-    ylabel('log(Events/month)')
+    ylabel('Events/month')
     title(arm_text)
     set(gca,'fontsize',20)
-    xlim([0.9 3.1])
+    
     ax.TickLabelInterpreter = 'tex';
-
+    ylim([0 max_point])
 
     yl = ylim;
-    ybar1 = yl(1) + (yl(2)-yl(1))* 1.03;
-    ybar1_ticks = yl(1)+(yl(2)-yl(1))*1.01;
-    ytext1 = yl(1) + (yl(2)-yl(1))* 1.07;
-    ybar2 = yl(1) + (yl(2)-yl(1))* 1.12;
-    ybar2_ticks = yl(1)+(yl(2)-yl(1))*1.1;
-    ytext2 = yl(1) + (yl(2)-yl(1))* 1.16;
-    yl_new = [yl(1) yl(1) + (yl(2)-yl(1))* 1.2];
+    ybar1 = yl(1) + (yl(2)-yl(1))* 1.05;
+    ybar1_ticks = yl(1)+(yl(2)-yl(1))*1.03;
+    ytext1 = yl(1) + (yl(2)-yl(1))* 1.09;
+    ybar2 = yl(1) + (yl(2)-yl(1))* 1.14;
+    ybar2_ticks = yl(1)+(yl(2)-yl(1))*1.12;
+    ytext2 = yl(1) + (yl(2)-yl(1))* 1.18;
+    yl_new = [yl(1) yl(1) + (yl(2)-yl(1))* 1.22];
 
+    plot(xlim,[max_point, max_point],'k--')
     plot([1 2],[ybar1 ybar1],'k-','linewidth',2)
     plot([1 1],[ybar1_ticks ybar1],'k-','linewidth',2)
     plot([2 2],[ybar1_ticks ybar1],'k-','linewidth',2)
@@ -1070,6 +1099,8 @@ for ia = 1:2
     ptext2 = def_ptext(p2);
     text(2,ytext2,ptext2,'fontsize',20,'HorizontalAlignment','center')
     ylim(yl_new)
+    yticks(0:5:40)
+
 
     
 end
@@ -1077,204 +1108,3 @@ set(gcf,'renderer','painters')
 print(gcf,[results_folder,'paired_plots3'],'-dpng')
 
 
-%% Make a paired plot
-if 0
-figure
-set(gcf,'position',[10 10 1400 1000])
-tiledlayout(2,2,'tilespacing','compact','padding','loose')
-for ip = 1:2
-numbers = paired.post_emu_def(ip).group(1).numbers;
-for i = 1:2
-    nexttile
-    if i == 1
-        
-        arm_text = 'Care-as-usual';
-        data = numbers(paired.post_emu_def(ip).group(1).pre_intervention,:);
-        p =  paired.post_emu_def(ip).group(2).p;
-    else
-        arm_text = 'Intervention';
-        data = numbers(paired.post_emu_def(ip).group(1).post_intervention,:);
-        p =  paired.post_emu_def(ip).group(3).p;
-    end
-    data(any(isnan(data),2),:) = [];
-    % paired plot
-    plot([1 2],data,'-k','linewidth',2)
-    hold on
-    xlim([0.5 2.5])
-    xticks([1 2])
-    if ip == 1
-        xticklabels({'Pre-EMU','3 months post-EMU'})
-    else
-        xticklabels({'Pre-EMU','12-20 months post-EMU'})
-    end
-    title(arm_text)
-    if i == 1
-        ylabel('Events/month')
-    end
-    set(gca,'fontsize',25)
-
-    yl = ylim;
-    ybar_top = yl(1)+(yl(2)-yl(1))*1.08;
-    ybar_ticks = yl(1)+(yl(2)-yl(1))*1.05;
-    ytext = yl(1)+(yl(2)-yl(1))*1.15;
-    yl_new = [yl(1) yl(1)+(yl(2)-yl(1))*1.25];
-    plot([1 2],[ybar_top ybar_top],'k-','linewidth',2)
-    plot([1 1],[ybar_ticks ybar_top],'k-','linewidth',2)
-    plot([2 2],[ybar_ticks ybar_top],'k-','linewidth',2)
-    if p < 0.001
-        ptext = 'p < 0.001';
-    elseif p < 0.05
-        ptext = sprintf('p = %1.3f',p);
-    else
-        ptext = sprintf('p = %1.2f',p);
-    end
-    text(1.5,ytext,ptext,'fontsize',25,'HorizontalAlignment','center')
-    ylim(yl_new)
-    
-
-end
-end
-set(gcf,'renderer','painters')
-print(gcf,[results_folder,'paired_plots2'],'-dpng')
-end
-
-
-if 0
-figure
-set(gcf,'position',[10 10 550 400])
-tiledlayout(1,1,'tilespacing','tight','padding','tight')
-for i = 1
-    nexttile
-    numbers = paired.post_emu_def(i).group(1).numbers;
-    pre_intervention = paired.post_emu_def(i).group(1).pre_intervention;
-    post_intervention = paired.post_emu_def(i).group(1).post_intervention;
-
-    % Paired plot
-    pre_p = plot(numbers(pre_intervention,1),numbers(pre_intervention,2),'o','linewidth',2,...
-        'markersize',17); % one color for pre-intervention
-    hold on
-    post_p = plot(numbers(post_intervention,1),numbers(post_intervention,2),'x','linewidth',2,...
-        'markersize',17);
-
-    max_all = max(numbers,[],'all');
-    min_all = min(numbers,[],'all');
-    plot([min_all max_all],[min_all max_all],'k--','linewidth',2)
-    xlim([min_all max_all])
-    ylim([min_all max_all])
-    xlabel('Pre-EMU events/month')
-    ylabel('Post-EMU events/month')
-    set(gca,'fontsize',15)
-    legend([pre_p,post_p],{'Pre-intervention','Post-intervention'},'fontsize',25,...
-        'location','northwest')
-    set(gca,'fontsize',25)
-    %title(sprintf('%s',formatted_p_values(paired.post_emu_def(i).group(1).p)))
-end
-set(gcf,'renderer','painters')
-
-print(gcf,[results_folder,'paired_plots'],'-dpng')
-end
-
-%% Additional analysis
-%{
-% Percentage of patients without prior psych care who arrange appt
-no_prior_psych_arrange_appt_all = T.follows_with_psych_pre == 0 & (T.patient_arranged_psych==1 | T.study_team_member_arranged == 1);
-no_prior_psych_arrange_appt_pt = T.follows_with_psych_pre == 0 & T.patient_arranged_psych==1;
-no_prior_psych_arrange_appt_team = T.follows_with_psych_pre == 0 & T.study_team_member_arranged==1;
-fprintf(fid,'<p>Number of patients without prior psych care: %d.</p>',sum(T.follows_with_psych_pre == 0));
-fprintf(fid,['<p>Number (%%) of these who arranged psych follow up: %d (%1.1f%%). '...
-    'Of these, %d (%1.1f%%) arranged follow up themselves, and %d (%1.1f%%) had follow-up '...
-    'arranged by team.</p>'],sum(no_prior_psych_arrange_appt_pt),sum(no_prior_psych_arrange_appt_pt)/sum(T.follows_with_psych_pre == 0)*100,...
-    sum(no_prior_psych_arrange_appt_pt),sum(no_prior_psych_arrange_appt_pt)/sum(no_prior_psych_arrange_appt_all)*100,...
-    sum(no_prior_psych_arrange_appt_team),sum(no_prior_psych_arrange_appt_team)/sum(no_prior_psych_arrange_appt_all)*100);
-
-% Get no psych follow up reasons
-no_psych_fields = var_names_lT(contains(var_names_lT,'IfNoPsychFollo'));
-assert(length(no_psych_fields)==20)% confirm it's 20
-no_psych_fields = no_psych_fields(1:10); % take the first 10
-no_psych_text = cell(10,1);
-
-no_psych_numbers = nan(10,1);
-no_psych_numbers_pre = nan(10,1);
-no_psych_numbers_post = nan(10,1);
-for i = 1:10
-    curr = no_psych_fields{i};
-    C = strsplit(curr,'_'); 
-    no_psych_text{i} = C{end};
-    no_psych_numbers(i) = sum(strcmp(lT.(curr),'Checked'));
-    no_psych_numbers_pre(i) = sum(strcmp(lT.(curr),'Checked') & strcmp(lT.Phase,'Pre-Intervention'));
-    no_psych_numbers_post(i) = sum(strcmp(lT.(curr),'Checked') & strcmp(lT.Phase,'Post-Intervention'));
-end
-no_psych_text{3} = 'Insurance';
-no_psych_text{9} = 'Scheduled';
-comb = [no_psych_numbers_pre';no_psych_numbers_post'];
-if 0
-figure
-bar(1:10,comb)
-xticks(1:size(comb,2))
-xticklabels(no_psych_text)
-legend({'Pre','Post'})
-end
-%}
-
-%{
-Old fields
-continuous_normalish = {'age','Age';...
-    'since_discharge_event_freq','Event frequency since discharge';...
-    'since_discharge_event_seve','Event severity since discharge';...
-    'work','Work';...
-    'home','Home';...
-    'social','Social';...
-    'private','Private';...
-    'relationships','Relationships';...
-    'qol','Quality of life';...
-    'work1','Work (survey)';...
-    'home1','Home (survey)';...
-    'social1','Social (survey)';...
-    'private1','Private (survey)';...
-    'relationships1','Relationships (survey)';...
-    'qol1','Quality of life (survey)';...
-    'since_discharge_event_freq1','Event frequency since discharge (survey)';...
-    'since_discharge_event_seve1','Event severity since discharge (survey)'};
-continuous_skewed = {'event_frequency_pre','Event frequency pre-EMU';...
-    'follow_up_interval','Follow up interval';...
-    'event_frequency_post','Event frequency post-EMU';...
-    'event_frequency_post1','Event frequency post-EMU (survey)';...
-    'time_to_diagnosis_in_days','Time to diagnosis in days';...
-    'event_frequency_post1_2b1583','Event frequency 12 months-post EMU'};
-binary = {'known_to_have_pnee_prior','Previously known to have PNEE','all';...
-    'dual_diagnosis','Dual diagnosis','all';...
-    'follows_with_psych_pre', 'Followed with psychiatry before EMU','all';...
-    'asm_pre','ASMs before EMU','all';...
-    'asm_dc','ASMs discontinued or lowered on discharge','all';...
-    'were_asm_for_an_indication','Non-epilepsy indication for ASMs','all';...
-    'talked_to_patient','Was the patient reached by phone call','all';...
-    'patient_arranged_psych','Did the patient arrange psych follow-up','all';...
-    'study_team_member_arranged','Did the study team member arrange psych follow-up','all';...
-    'did_patient_follow_up_with','Did the patient follow up with neurology','all';...
-    'was_follow_up_scheduled','Was neurology follow-up scheduled','all';...
-    'patient_understands_diagno','Does patient understand diagnosis of PNEE','followup';...
-    'did_your_understanding_of','Did patient understanding of PNEE improve after EMU','followup';...
-    'patient_agrees_with_diagno','Does patient agree with diagnosis of PNEE','followup';...
-    'ed_visits_or_hospitalizati','Any ED visits or hospitalizations since discharge','followup';...
-    'patient_scheduled_appointm','Did the patient schedule appointment for second opinion','followup';...
-    'anti_seizure_medication_wa','Were ASMs changed or stopped in the EMU','followup';...
-    'psychiatry_consult_obtaine','Was psychiatry consult obtained in the EMU','followup';...
-    'follow_up_with_psychiatris','Did the patient schedule or complete psychiatry follow up','followup';...
-    'psych_med_was_changes_star','Was a psychiatric medication changed or started','followup';...
-    'self_help_or_apps_used_for','Were self-help or apps used for PNEE','followup';...
-    'patient_understands_diagno1','Does patient understand diagnosis of PNEE (survey)','all';...
-    'did_your_understanding_of1','Did patient understanding of PNEE improve after EMU (survey)','all';...
-    'patient_agrees_with_diagno1','Does patient agree with diagnosis of PNEE (survey)','all';...
-    'ed_visits_or_hospitalizati1','Any ED visits or hospitalizations since discharge (survey)','all';...
-    'patient_scheduled_appointm1','Did the patient schedule appointment for second opinion (survey)','all';...
-    'anti_seizure_medication_wa1','Were ASMs changed or stopped in the EMU (survey)','all';...
-    'follow_up_with_psychiatris1','Did the patient schedule or complete psychiatry follow up (survey)','all';...
-    'psych_med_was_changes_star1','Was a psychiatric medication changed or started (survey)','all';...
-    'self_help_or_apps_used_for1','Were self-help or apps used for PNEE (survey)','all';...
-    'improvement_fifty','>50% Improvement in Event Frequency? (3 months)','followup';...
-    'any_ed_pre','Any ED visits year prior to admission?','all';...
-    'time_to_diagnosis_2_years','Time to diagnosis >2 years?','followup';...
-    'twelve_month_50_improvemen','>50% Improvement in Event frequency? (12 months)','all'};
-non_binary = {'gender','Gender'};
-
-%}
