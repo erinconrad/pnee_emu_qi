@@ -670,7 +670,7 @@ n_12_int_ph = sum(~isnan(T.fiftyper_12mon_phonecall)&T.phase==2);
 % 12-20 intervention follow up via chart review
 n_12_int_ch = sum((isnan(T.fiftyper_12mon_phonecall) & ~isnan(T.event_frequency_post1_2b1583))&T.phase==2);
 % 12-20 intervention no phone
-n_12_int_no_ph = sum(isnan(T.fiftyper_12mon_phonecall)&T.phase==2);
+n_12_int_ph = sum(~isnan(T.fiftyper_12mon_phonecall)&T.phase==2);
 
 %% Make Table 1
 % find table 1 vars
